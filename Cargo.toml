@@ -1,0 +1,53 @@
+[package]
+name = "frontest"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maciej Zwoliński <mac.zwolinski@gmail.com>"]
+repository = "https://github.com/zwo1in/frontest-rs"
+homepage = "https://github.com/zwo1in/frontest-rs"
+license = "MIT OR Apache-2.0"
+keywords = ["web", "wasm", "dom", "test"]
+categories = ["wasm", "web-programming", "testing"]
+description = "A crate for querying, matching and asserting DOM"
+readme = "README.md"
+
+[features]
+default = ["yew"]
+
+[dependencies]
+gloo = { version = "0.6", features = ["futures"] }
+wasm-bindgen = "*"
+web-sys = { version = "*", features = [
+  "AnimationEvent",
+  "Document",
+  "DragEvent",
+  "Element",
+  "ErrorEvent",
+  "Event",
+  "EventInit",
+  "EventTarget",
+  "FocusEvent",
+  "HtmlElement",
+  "HtmlInputElement",
+  "HtmlTextAreaElement",
+  "InputEvent",
+  "InputEventInit",
+  "KeyboardEvent",
+  "Location",
+  "MouseEvent",
+  "Node",
+  "NodeList",
+  "PointerEvent",
+  "ProgressEvent",
+  "Text",
+  "TouchEvent",
+  "TransitionEvent",
+  "UiEvent",
+  "WheelEvent",
+  "Window",
+] }
+
+yew = { version = "0.19", optional = true }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
