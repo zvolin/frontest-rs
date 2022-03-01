@@ -28,6 +28,7 @@ web-sys = { version = "*", features = [
   "EventTarget",
   "FocusEvent",
   "HtmlElement",
+  "HtmlCollection",
   "HtmlInputElement",
   "HtmlTextAreaElement",
   "InputEvent",
@@ -51,3 +52,4 @@ yew = { version = "0.19", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+futures = "0.3"
