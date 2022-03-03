@@ -8,6 +8,8 @@
 //!
 //! Let's write a test for a simple [`yew`] component that displays it's value and increments it on button click.
 //! ```no_run
+//! # #[cfg(feature = "yew")]
+//! # {
 //! # use yew::prelude::*;
 //! #[function_component(Incrementable)]
 //! fn incrementable() -> Html {
@@ -25,7 +27,7 @@
 //! }
 //!
 //! # use wasm_bindgen_test::wasm_bindgen_test;
-//! use frontest::{tick, Selector, HasText, HasRole};
+//! use frontest::{Query, HasText, HasRole};
 //! use frontest::yew::render;
 //! use yew::html;
 //!
@@ -36,18 +38,82 @@
 //!     let button = mount.get(&HasRole("button")).unwrap();
 //!
 //!     assert_eq!("Value: 0", value.inner_text());
-//!
 //!     button.click();
-//!
 //!     assert_eq!("Value: 1", value.inner_text());
 //! }
+//! # }
 //! ```
+//!
+//! # About testing:
+//!
+//! This library aims to allow developers to test their application in a way that a user would interact with it.
+//! For this purpose it is recommended to prioritize certain queries above another.
+//! Currently only two matchers are implemented. More will be available in future releases.
+//! Matchers should be prioritized like so:
+//! - [`HasRole`] Should always be used where possible. It allows accessing elements that are exposed into accessibility tree.
+//! - [`HasText`] Can be used to select non-interactive components or further restrict other queries.
+//!
+//! # Matchers:
+//!
+//! Matchers are predicates for [`HtmlElement`]. They return [`true`] if given element suffices some criteria
+//! or [`false`] otherwise.
+//!
+//! Using the matcher [`Not`] and methods from [`Joinable`] trait it is possible to combine multiple matchers into
+//! a logical expression.
+//!
+//! # Integration:
+//! Tests should be run using [`wasm-bindgen-test`]. It allows running them directly in browsers or in node-js.
+//!
+//! Currently this crate provides a [`render`] function that allows for quickly rendering any [`html`] created with [`yew`].
+//! It was choosen to render the html instead of directly taking a component so it is easier to wrap them with [`ContextProvider`] and so on.
+//!
+//! ## Example:
+//! ```no_run
+//! # #[cfg(feature = "yew")]
+//! # {
+//! # use wasm_bindgen_test::wasm_bindgen_test;
+//! use frontest::yew::render;
+//! use yew::prelude::*;
+//! #
+//! # #[function_component(Baz)]
+//! # fn baz() -> Html { html! {} }
+//! #
+//! # #[derive(Clone, PartialEq)]
+//! # struct Bar {}
+//!
+//! #[wasm_bindgen_test]
+//! async fn foo() {
+//!     let elem = render(html! {
+//!         <ContextProvider<Bar> context={Bar {}}>
+//!             <Baz />
+//!         </ContextProvider<Bar>>
+//!     }).await;
+//! }
+//! # }
+//! ```
+//!
+//! ## Warning:
+//!
+//! [`wasm-bindgen-test`] runs all tests sequentially and let them manipulate real DOM.
+//! However it doesn't recreate full DOM for each test, so things done in one test may impact others.
+//! Always make sure you are doing a proper cleanup of DOM after your tests eg. remove mounted child element.
+//! Hopefully in future this library will provide some kind of RAII for running tests.
+//!
+//! [`dom-testing-library`]: https://testing-library.com/docs/dom-testing-library/intro
+//! [`react-testing-library`]: https://testing-library.com/docs/react-testing-library/intro
+//! [`wasm-bindgen-test`]: https://rustwasm.github.io/wasm-bindgen/wasm-bindgen-test/usage.html
+//! [`render`]: yew::render
+//! [`html`]: ::yew::html!
+//! [`ContextProvider`]: ::yew::context::ContextProvider
 use gloo::timers::future::sleep;
 use std::time::Duration;
 use wasm_bindgen::JsCast;
 use web_sys::{Element, HtmlElement};
 
-/// Returns the list of aria roles for a given [`HtmlElement`]
+#[cfg(test)]
+wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+/// Returns the list of aria roles for a given [`HtmlElement`].
 ///
 /// Aria role is a semantic meaning of an element.
 /// It provides a web site with an [`accessibility`].
@@ -87,19 +153,6 @@ use web_sys::{Element, HtmlElement};
 /// | `<th scope=row>`                | rowheader         |
 /// | `<th>`                          | columnheader      |
 ///
-/// # Example:
-///
-/// ```no_run
-/// # use frontest::element_to_aria_roles;
-/// # use wasm_bindgen::JsCast;
-/// # use web_sys::HtmlElement;
-/// # let document = gloo::utils::document();
-/// // <a tag="foo" href="...">"Click me"</a>
-/// let anchor: HtmlElement = document.get_element_by_id("foo")
-///     .unwrap()
-///     .unchecked_into();
-/// assert_eq!(element_to_aria_roles(&anchor), vec!["link"]);
-/// ```
 /// [`accessibility`]: https://developer.mozilla.org/en-US/docs/Web/Accessibility
 pub fn element_to_aria_roles(elem: &HtmlElement) -> Vec<&'static str> {
     match elem.tag_name().to_lowercase().as_str() {
@@ -145,12 +198,12 @@ pub fn element_to_aria_roles(elem: &HtmlElement) -> Vec<&'static str> {
 
 /// Trait implemented by types that can be used as a predicate for [`HtmlElement`].
 ///
-/// One can implement this trait to create a custom [`Matcher`]s.
+/// One can implement this trait to create custom [`Matcher`]s.
 ///
 /// # Example:
 /// ```no_run
 /// # use web_sys::HtmlElement;
-/// # use frontest::{HasRole, Joinable, Selector};
+/// # use frontest::{HasRole, Joinable, Query};
 /// # use gloo::utils::{body, document};
 /// use frontest::Matcher;
 ///
@@ -183,7 +236,7 @@ pub trait Matcher {
 #[wasm_bindgen_test::wasm_bindgen_test]
 async fn doctest_matcher() {
     use crate::Matcher;
-    use crate::{HasRole, Joinable, Selector};
+    use crate::{HasRole, Joinable, Query};
     use gloo::utils::{body, document};
     use web_sys::HtmlElement;
 
@@ -208,6 +261,55 @@ async fn doctest_matcher() {
     assert!(hidden_button.inner_html().contains("in rust"));
 }
 
+/// Consumes a [`Matcher`] and returns a negation of it.
+///
+/// Utility wrapper that performs a logical `not` operation on a matcher.
+///
+/// # Example:
+///
+/// ```no_run
+/// use frontest::{HasRole, HasText, Joinable, Not, Query};
+/// use gloo::utils::{body, document};
+/// let div = document().create_element("div").unwrap();
+/// div.set_inner_html(
+///     r#"<div>
+///         <p>what</p>
+///         <a href="/foo">is</a>
+///         <button>this</button>
+///     </div>"#,
+/// );
+/// body().append_child(&div).unwrap();
+///
+/// let link = div.get(&HasText("is").and(Not(HasRole("button")))).unwrap();
+/// assert_eq!(&link.get_attribute("href").unwrap(), "/foo");
+/// ```
+pub struct Not<M: Matcher>(pub M);
+
+impl<M: Matcher> Matcher for Not<M> {
+    fn matches(&self, elem: &HtmlElement) -> bool {
+        !self.0.matches(elem)
+    }
+}
+
+#[cfg(test)]
+#[wasm_bindgen_test::wasm_bindgen_test]
+async fn doctest_not() {
+    use crate::{HasRole, HasText, Joinable, Not, Query};
+    use gloo::utils::{body, document};
+    let div = document().create_element("div").unwrap();
+    div.set_inner_html(
+        r#"<div>
+            <p>what</p>
+            <a href="/foo">is</a>
+            <button>this</button>
+        </div>"#,
+    );
+    body().append_child(&div).unwrap();
+
+    let link = div.get(&HasText("is").and(Not(HasRole("button")))).unwrap();
+    assert_eq!(&link.get_attribute("href").unwrap(), "/foo");
+}
+
 /// Matches components that have visible text that contains given substring.
 ///
 /// [`HasText`] uses [`inner_text`] under the hood and is case-sensitive.
@@ -219,7 +321,7 @@ async fn doctest_matcher() {
 ///
 /// ```no_run
 /// # use gloo::utils::{body, document};
-/// # use frontest::{HasText, Selector};
+/// # use frontest::{HasText, Query};
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
@@ -252,7 +354,7 @@ impl<'a> Matcher for HasText<'a> {
 #[cfg(test)]
 #[wasm_bindgen_test::wasm_bindgen_test]
 async fn doctest_has_text() {
-    use crate::{HasText, Selector};
+    use crate::{HasText, Query};
     use gloo::utils::{body, document};
     let div = document().create_element("div").unwrap();
     div.set_inner_html(
@@ -272,8 +374,8 @@ async fn doctest_has_text() {
 /// Matches components that have given aria role.
 ///
 /// This is by far the best method for finding components as it searches for elements in the [`accessibility tree`].
-/// You should always prefere something like `.get(&HasRole("button").and(HasText("Add")))` over the alternavies.
-/// Aria-roles currently support semantic tag to role deduction with [`element_to_aria_roles`].
+/// You should always prefer something like `.get(&HasRole("button").and(HasText("Add")))` over the alternavies.
+/// Currently only supports user assigned roles and semantic tag to role deduction with [`element_to_aria_roles`].
 /// It currently doesn't support any of [`aria_attribute_types`] or implicit role deduction.
 /// Support for those is planned as much as it can be at this age of project.
 ///
@@ -281,7 +383,7 @@ async fn doctest_has_text() {
 ///
 /// ```no_run
 /// # use gloo::utils::{body, document};
-/// # use frontest::{HasRole, Selector};
+/// # use frontest::{HasRole, Query};
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
@@ -292,7 +394,7 @@ async fn doctest_has_text() {
 /// );
 /// body().append_child(&div).unwrap();
 ///
-/// assert_eq!(body().get_all(&HasRole("button")).len(), 3);
+/// assert_eq!(div.get_all(&HasRole("button")).len(), 3);
 /// ```
 /// [`accessibility_tree`]: https://developer.mozilla.org/en-US/docs/Glossary/Accessibility_tree
 /// [`aria_attribute_types`]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes#aria_attribute_types
@@ -313,7 +415,7 @@ impl<'a> Matcher for HasRole<'a> {
 #[cfg(test)]
 #[wasm_bindgen_test::wasm_bindgen_test]
 async fn doctest_has_role() {
-    use crate::{HasRole, Selector};
+    use crate::{HasRole, Query};
     use gloo::utils::{body, document};
     let div = document().create_element("div").unwrap();
     div.set_inner_html(
@@ -325,61 +427,126 @@ async fn doctest_has_role() {
     );
     body().append_child(&div).unwrap();
 
-    assert_eq!(body().get_all(&HasRole("button")).len(), 3);
+    assert_eq!(div.get_all(&HasRole("button")).len(), 3);
 }
 
+/// A trait for joining multiple matchers.
+///
+/// It is automatically implemented for all matchers.
+/// It allows for joining matchers using `or` and `and` methods that consume both matchers
+/// and returns a joined matcher. It can be chained with multiple calls.
+///
+/// # Example:
+/// ```no_run
+/// use frontest::{HasRole, HasText, Joinable, Query};
+/// use gloo::utils::{body, document};
+/// let div = document().create_element("div").unwrap();
+/// div.set_inner_html(
+///     r#"<div>
+///         <button>I eat cookies</button>
+///     </div>"#,
+/// );
+/// body().append_child(&div).unwrap();
+///
+/// assert!(div
+///     .get(
+///         &HasRole("button")
+///             .and(HasText("bananas").or(HasText("apples")))
+///             .or(HasText("cookies"))
+///     )
+///     .is_some());
+/// ```
 pub trait Joinable {
-    fn and<'a, 'b, F>(self, other: F) -> AndFilter<'b>
+    /// Join two matchers by applying logical `and` operation.
+    fn and<'a, 'b, M>(self, other: M) -> And<'b>
     where
         'a: 'b,
         Self: Sized + Matcher + 'a,
-        F: Matcher + 'a,
+        M: Matcher + 'a,
     {
-        AndFilter {
-            filters: vec![Box::new(self), Box::new(other)],
+        And {
+            filters: [Box::new(self), Box::new(other)],
         }
     }
 
-    fn or<'a, 'b, F>(self, other: F) -> OrFilter<'b>
+    /// Join two matchers by applying logical `or` operation.
+    fn or<'a, 'b, M>(self, other: M) -> Or<'b>
     where
         'a: 'b,
         Self: Sized + Matcher + 'a,
-        F: Matcher + 'a,
+        M: Matcher + 'a,
     {
-        OrFilter {
-            filters: vec![Box::new(self), Box::new(other)],
+        Or {
+            filters: [Box::new(self), Box::new(other)],
         }
     }
 }
 
-impl<F> Joinable for F where F: Matcher {}
+impl<M> Joinable for M where M: Matcher {}
 
-pub struct AndFilter<'a> {
-    filters: Vec<Box<dyn Matcher + 'a>>,
+#[cfg(test)]
+#[wasm_bindgen_test::wasm_bindgen_test]
+async fn doctest_joinable() {
+    use crate::{HasRole, HasText, Joinable, Query};
+    use gloo::utils::{body, document};
+    let div = document().create_element("div").unwrap();
+    div.set_inner_html(
+        r#"<div>
+            <button>I eat cookies</button>
+        </div>"#,
+    );
+    body().append_child(&div).unwrap();
+
+    assert!(div
+        .get(
+            &HasRole("button")
+                .and(HasText("bananas").or(HasText("apples")))
+                .or(HasText("cookies"))
+        )
+        .is_some());
 }
 
-impl<'a> Matcher for AndFilter<'a> {
+/// Result of joining two [`Matcher`]s by applyng a logical [`and`] operation on them.
+///
+/// [`and`]: Joinable::and
+pub struct And<'a> {
+    filters: [Box<dyn Matcher + 'a>; 2],
+}
+
+impl<'a> Matcher for And<'a> {
     fn matches(&self, elem: &HtmlElement) -> bool {
         self.filters.iter().all(|f| f.matches(elem))
     }
 }
 
-pub struct OrFilter<'a> {
-    filters: Vec<Box<dyn Matcher + 'a>>,
+/// Result of combining two [`Matcher`]s by applyng a logical [`or`] operation on them.
+///
+/// [`or`]: Joinable::or
+pub struct Or<'a> {
+    filters: [Box<dyn Matcher + 'a>; 2],
 }
 
-impl<'a> Matcher for OrFilter<'a> {
+impl<'a> Matcher for Or<'a> {
     fn matches(&self, elem: &HtmlElement) -> bool {
         self.filters.iter().any(|f| f.matches(elem))
     }
 }
 
-pub trait Selector {
+/// Allows selecting [`HtmlElement`]s using [`Matcher`]s.
+///
+/// By default implemented for [`Element`] where it selects it's children matching provided pattern.
+pub trait Query {
+    /// Tries to get a unique component. Returns [`None`] on failure and [`HtmlElement`] on success.
+    ///
+    /// # Panics:
+    /// If more than one element is found.
     fn get<M: Matcher>(&self, rules: &M) -> Option<HtmlElement>;
+
+    /// Returns a [`Vec`] of all components matched by a [`Matcher`].
     fn get_all<M: Matcher>(&self, rules: &M) -> Vec<HtmlElement>;
 }
 
-impl Selector for Element {
+impl Query for Element {
     fn get<M: Matcher>(&self, matcher: &M) -> Option<HtmlElement> {
         let selected = self.query_selector_all("*").unwrap();
         // Get all nodes matching given text
@@ -407,6 +574,9 @@ impl Selector for Element {
     }
 }
 
+/// A helpers when testing frontend made with [`yew`]
+///
+/// [`yew`]: ::yew
 #[cfg(feature = "yew")]
 pub mod yew {
     use super::*;
@@ -422,13 +592,88 @@ pub mod yew {
         props.content.clone()
     }
 
+    /// Render arbitrary output of [`html`] macro, mount it into body and return mount-point [`Element`]
+    ///
+    /// # Example:
+    /// ```no_run
+    /// # use yew::prelude::*;
+    /// #[function_component(Incrementable)]
+    /// fn incrementable() -> Html {
+    ///     let counter = use_state(|| 0);
+    ///     let onclick = {
+    ///         let counter = counter.clone();
+    ///         Callback::from(move |_| counter.set(*counter + 1))
+    ///     };
+    ///     html! {
+    ///         <div>
+    ///             <p>{ format!("Value: {}", *counter) }</p>
+    ///             <button {onclick}>{ "Add" }</button>
+    ///         </div>
+    ///     }
+    /// }
+    ///
+    /// # use wasm_bindgen_test::wasm_bindgen_test;
+    /// use frontest::{Query, HasText, HasRole};
+    /// use frontest::yew::render;
+    /// use yew::html;
+    ///
+    /// #[wasm_bindgen_test]
+    /// async fn clicking_on_button_should_increment_value() {
+    ///     let mount = render(html! { <Incrementable /> }).await;
+    ///     let value = mount.get(&HasText("Value:")).unwrap();
+    ///     let button = mount.get(&HasRole("button")).unwrap();
+    ///
+    ///     assert_eq!("Value: 0", value.inner_text());
+    ///     button.click();
+    ///     assert_eq!("Value: 1", value.inner_text());
+    /// }
+    /// ```
+    ///
+    /// [`html`]: ::yew::html!
+    /// [`element`]: web_sys::Element
     pub async fn render(content: Html) -> Element {
-        ::yew::start_app_with_props_in_element::<Wrapper>(
-            gloo::utils::document().get_element_by_id("output").unwrap(),
-            WrapperProps { content },
-        );
+        let div = gloo::utils::document().create_element("div").unwrap();
+        gloo::utils::body().append_child(&div).unwrap();
+        let res = div.clone();
+        ::yew::start_app_with_props_in_element::<Wrapper>(div, WrapperProps { content });
 
-        gloo::utils::document().get_element_by_id("output").unwrap()
+        res
+    }
+
+    #[cfg(test)]
+    #[test]
+    fn doctest_yew_render() {
+        use ::yew::prelude::*;
+        #[function_component(Incrementable)]
+        fn incrementable() -> Html {
+            let counter = use_state(|| 0);
+            let onclick = {
+                let counter = counter.clone();
+                Callback::from(move |_| counter.set(*counter + 1))
+            };
+            html! {
+                <div>
+                    <p>{ format!("Value: {}", *counter) }</p>
+                    <button {onclick}>{ "Add" }</button>
+                </div>
+            }
+        }
+
+        use crate::yew::render;
+        use crate::{HasRole, HasText, Query};
+        use ::yew::html;
+        use wasm_bindgen_test::wasm_bindgen_test;
+
+        #[wasm_bindgen_test]
+        async fn clicking_on_button_should_increment_value() {
+            let mount = render(html! { <Incrementable /> }).await;
+            let value = mount.get(&HasText("Value:")).unwrap();
+            let button = mount.get(&HasRole("button")).unwrap();
+
+            assert_eq!("Value: 0", value.inner_text());
+            button.click();
+            assert_eq!("Value: 1", value.inner_text());
+        }
     }
 }
 
@@ -436,50 +681,7 @@ pub mod yew {
 ///
 /// # Warning:
 /// I'm currently unsure in which condition tick is required. Most cases should work without the need of using it.
+#[doc(hidden)]
 pub async fn tick() {
     sleep(Duration::ZERO).await;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::yew::render;
-    use super::*;
-    use ::yew::prelude::*;
-    use futures::future::FutureExt;
-
-    #[allow(unused_imports)]
-    use wasm_bindgen_test::console_log;
-    use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[function_component(App)]
-    fn app() -> Html {
-        let counter = use_state(|| 0);
-        let onclick = {
-            let counter = counter.clone();
-            Callback::from(move |_| counter.set(*counter + 1))
-        };
-        html! {
-            <div>
-                <p>{ format!("Value: {}", *counter) }</p>
-                <button {onclick}>{ "Add" }</button>
-            </div>
-        }
-    }
-
-    #[wasm_bindgen_test]
-    async fn unit_tests() {
-        render(html! { <App /> })
-            .then(|mount| async move {
-                let button = mount.get(&HasRole("button").and(HasText("Add"))).unwrap();
-                let value = mount.get(&HasText("Chuj").or(HasText("Value"))).unwrap();
-
-                assert_eq!("Value: 0", value.inner_text());
-
-                button.click();
-
-                assert_eq!("Value: 1", value.inner_text());
-            })
-            .await;
-    }
 }
