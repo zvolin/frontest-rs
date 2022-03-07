@@ -7,8 +7,13 @@ repository = "https://github.com/zwo1in/frontest-rs"
 homepage = "https://github.com/zwo1in/frontest-rs"
 documentation = "https://docs.rs/frontest"
 license = "MIT OR Apache-2.0"
-keywords = ["web", "wasm", "dom", "test"]
-categories = ["wasm", "web-programming", "testing"]
+keywords = ["web", "wasm", "dom", "test", "frontend"]
+categories = [
+  "wasm",
+  "web-programming",
+  "accessibility",
+  "development-tools::testing",
+]
 description = "A crate for querying, matching and asserting DOM"
 readme = "README.md"
 
