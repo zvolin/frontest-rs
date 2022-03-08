@@ -1,3 +1,4 @@
+/// Find various elements across the website as the user would.
 use gloo::utils::document;
 use wasm_bindgen::JsCast;
 use web_sys::{

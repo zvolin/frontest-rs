@@ -1,4 +1,4 @@
-//! Quick and lightweight library to query and assert DOM.
+//! A lightweight library to query and assert DOM.
 //!
 //! Frontest is heavily inspired by [`dom-testing-library`] and [`react-testing-library`].
 //! It provides a set of queries that you can use to quickly find your elements in document
@@ -16,21 +16,26 @@
 //! let div = document().create_element("div").unwrap();
 //! div.set_inner_html(
 //!     r#"<div>
-//!         <label for="best-language">Type rust</label>
-//!         <input id="best-language" />
-//!
-//!         <textarea placeholder="rust rocks on frontend as..." />
-//!     </div>"#
+//!         <label>
+//!             I will start testing my frontend!
+//!             <button>
+//!                 Take the red pill
+//!             </button>
+//!         </label>
+//!         <label>
+//!             It's too problematic dude...
+//!             <button>
+//!                 Take the blue pill
+//!             </button>
+//!         </label>
+//!     </div>"#,
 //! );
 //! body().append_child(&div).unwrap();
 //!
-//! assert_eq!(
-//!     div.get_all(
-//!         &HasRole("textbox").and(HasLabel("Type rust").or(HasPlaceholder("rust rocks")))
-//!     )
-//!     .len(),
-//!     2
-//! );
+//! let go_to_matrix = div
+//!     .get(&HasRole("button").and(Not(HasLabel("It's too problematic dude..."))))
+//!     .unwrap();
+//! go_to_matrix.click();
 //!
 //! body().remove_child(&div).unwrap();
 //! ```
@@ -44,7 +49,9 @@
 //! - [`HasRole`] Should always be used where possible. It allows accessing elements that are exposed into accessibility tree.
 //! - [`HasLabel`] Also should be used where possible. Is supported by screen readers and allows for easier focusing elements.
 //! - [`HasPlaceholder`] Not as great option as predecessors, however still a better alternative than [`HasText`] for accessible elements.
-//! - [`HasText`] Can be used to select non-interactive components or further restrict other queries.
+//! - [`HasText`] Matches the text in a way that it is presented to the user.
+//!   All css rules applies eg. elements with `visibility: hidden;` won't be ever matched.
+//!   Can be used to select non-interactive components or further restrict other queries.
 //!
 //! # Matchers:
 //!
@@ -53,6 +60,33 @@
 //!
 //! Using the matcher [`Not`] and methods from [`Joinable`] trait it is possible to combine multiple matchers into
 //! a logical expression.
+//!
+//! ## You can easily implement your own `Matcher`s.
+//!
+//! ```no_run
+//! # use frontest::prelude::*;
+//! # use gloo::utils::{document, body};
+//! # use web_sys::HtmlElement;
+//! struct IsHidden;
+//!
+//! impl Matcher for IsHidden {
+//!     fn matches(&self, elem: &HtmlElement) -> bool {
+//!         elem.hidden()
+//!     }
+//! }
+//!
+//! let div = document().create_element("div").unwrap();
+//! div.set_inner_html(
+//!     r#"<button hidden>
+//!         Yayyy frontend in rust!
+//!     </button>"#
+//! );
+//! div.append_child(&div).unwrap();
+//!
+//! let hidden_button = div.get(&IsHidden.and(HasRole("button"))).unwrap();
+//!
+//! body().remove_child(&div).unwrap();
+//! ```
 //!
 //! # Integration:
 //! Tests should be run using [`wasm-bindgen-test`]. It allows running them directly in browsers or in node-js.
@@ -125,6 +159,7 @@
 use gloo::timers::future::sleep;
 use std::time::Duration;
 
+/// A convenient imports for testing.
 pub mod prelude {
     pub use crate::query::{And, Not, Or};
     pub use crate::query::{HasLabel, HasPlaceholder, HasRole, HasText};
@@ -146,21 +181,26 @@ async fn doctest_basic_usage() {
     let div = document().create_element("div").unwrap();
     div.set_inner_html(
         r#"<div>
-            <label for="best-language">Type rust</label>
-            <input type="text" id="best-language" />
-   
-            <textarea placeholder="rust rocks on frontend as..." />
+            <label>
+                I will start testing my frontend!
+                <button>
+                    Take the red pill
+                </button>
+            </label>
+            <label>
+                It's too problematic dude...
+                <button>
+                    Take the blue pill
+                </button>
+            </label>
         </div>"#,
     );
     body().append_child(&div).unwrap();
 
-    assert_eq!(
-        div.get_all(
-            &HasRole("textbox").and(HasLabel("Type rust").or(HasPlaceholder("rust rocks")))
-        )
-        .len(),
-        2
-    );
+    let go_to_matrix = div
+        .get(&HasRole("button").and(Not(HasLabel("It's too problematic dude..."))))
+        .unwrap();
+    go_to_matrix.click();
 
     body().remove_child(&div).unwrap();
 }
