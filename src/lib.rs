@@ -10,7 +10,7 @@
 //! with the respect for assisstive technology.
 //!
 //! ```no_run
-//! use frontest::query::*;
+//! use frontest::prelude::*;
 //! use gloo::utils::{body, document};
 //!
 //! let div = document().create_element("div").unwrap();
@@ -82,7 +82,7 @@
 //!
 //! # use wasm_bindgen_test::wasm_bindgen_test;
 //! # use gloo::utils::body;
-//! use frontest::query::{Query, HasText, HasRole};
+//! use frontest::prelude::*;
 //! use frontest::yew::render;
 //! use yew::html;
 //!
@@ -124,6 +124,13 @@
 //! [`Joinable`]: query::Joinable
 use gloo::timers::future::sleep;
 use std::time::Duration;
+
+pub mod prelude {
+    pub use crate::query::{And, Not, Or};
+    pub use crate::query::{HasLabel, HasPlaceholder, HasRole, HasText};
+
+    pub use crate::query::{Joinable, Matcher, Query};
+}
 
 #[cfg(test)]
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
@@ -198,7 +205,7 @@ pub mod yew {
     ///
     /// # use wasm_bindgen_test::wasm_bindgen_test;
     /// # use gloo::utils::body;
-    /// use frontest::query::{Query, HasText, HasRole};
+    /// use frontest::prelude::*;
     /// use frontest::yew::render;
     /// use yew::html;
     ///
