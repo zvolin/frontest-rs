@@ -159,6 +159,9 @@
 use gloo::timers::future::sleep;
 use std::time::Duration;
 
+#[cfg(test)]
+wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
 /// A convenient imports for testing.
 pub mod prelude {
     pub use crate::query::{And, Not, Or};
@@ -166,10 +169,7 @@ pub mod prelude {
 
     pub use crate::query::{Joinable, Matcher, Query};
 }
-
-#[cfg(test)]
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
+/// Find various elements across the website as the user would.
 pub mod query;
 
 #[cfg(test)]
