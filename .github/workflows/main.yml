@@ -1,0 +1,20 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jetli/wasm-pack-action@v0.3.0
+
+      - name: test-firefox
+        run: wasm-pack test --headless --firefox 
+
+      - name: test-chrome
+        run: wasm-pack test --headless --chrome
+
+      - name: doctests
+        run: cargo test
+
+      - name: build-doc
+        run: cargo doc
