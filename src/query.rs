@@ -1,4 +1,3 @@
-/// Find various elements across the website as the user would.
 use gloo::utils::document;
 use wasm_bindgen::JsCast;
 use web_sys::{
@@ -241,6 +240,7 @@ async fn doctest_not() {
 /// body().remove_child(&div).unwrap();
 /// ```
 /// [`inner_text`]: web_sys::HtmlElement::inner_text
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HasText<'a>(pub &'a str);
 
 impl<'a> Matcher for HasText<'a> {
@@ -307,6 +307,7 @@ async fn doctest_has_text() {
 /// ```
 /// [`accessibility_tree`]: https://developer.mozilla.org/en-US/docs/Glossary/Accessibility_tree
 /// [`aria_attribute_types`]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes#aria_attribute_types
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HasRole<'a>(pub &'a str);
 
 impl<'a> Matcher for HasRole<'a> {
@@ -388,6 +389,7 @@ async fn doctest_has_role() {
 /// body().remove_child(&div).unwrap();
 /// ```
 /// [`Labeling`]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HasLabel<'a>(pub &'a str);
 
 impl<'a> Matcher for HasLabel<'a> {
@@ -511,6 +513,7 @@ async fn doctest_has_label() {
 ///
 /// body().remove_child(&div).unwrap();
 /// ```
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HasPlaceholder<'a>(pub &'a str);
 
 impl<'a> Matcher for HasPlaceholder<'a> {
