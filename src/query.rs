@@ -95,9 +95,8 @@ pub fn element_to_aria_roles(elem: &HtmlElement) -> Vec<&'static str> {
 /// # Example:
 /// ```no_run
 /// # use web_sys::HtmlElement;
-/// # use frontest::query::{HasRole, Joinable, Query};
 /// # use gloo::utils::{body, document};
-/// use frontest::query::Matcher;
+/// use frontest::prelude::*;
 ///
 /// struct IsHidden;
 ///
@@ -164,8 +163,9 @@ async fn doctest_matcher() {
 /// # Example:
 ///
 /// ```no_run
-/// use frontest::query::{HasRole, HasText, Joinable, Not, Query};
 /// use gloo::utils::{body, document};
+/// use frontest::prelude::*;
+
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
@@ -221,7 +221,8 @@ async fn doctest_not() {
 ///
 /// ```no_run
 /// # use gloo::utils::{body, document};
-/// # use frontest::query::{HasText, Query};
+/// use frontest::prelude::*;
+///
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
@@ -287,7 +288,8 @@ async fn doctest_has_text() {
 ///
 /// ```no_run
 /// # use gloo::utils::{body, document};
-/// # use frontest::query::{HasRole, Query};
+/// use frontest::prelude::*;
+///
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
@@ -351,8 +353,8 @@ async fn doctest_has_role() {
 /// # Example:
 ///
 /// ```no_run
-/// use frontest::query::{HasLabel, Query};
 /// # use gloo::utils::{body, document};
+/// use frontest::prelude::*;
 ///
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
@@ -489,8 +491,8 @@ async fn doctest_has_label() {
 /// # Example:
 ///
 /// ```no_run
-/// use frontest::query::{HasPlaceholder, Query};
 /// # use gloo::utils::{body, document};
+/// use frontest::prelude::*;
 ///
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
@@ -554,8 +556,9 @@ async fn doctest_has_placeholder() {
 ///
 /// # Example:
 /// ```no_run
-/// use frontest::query::{HasRole, HasText, Joinable, Query};
 /// use gloo::utils::{body, document};
+/// use frontest::prelude::*;
+///
 /// let div = document().create_element("div").unwrap();
 /// div.set_inner_html(
 ///     r#"<div>
