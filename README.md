@@ -1,10 +1,27 @@
 # Frontest
 
-![Crates.io](https://img.shields.io/crates/v/frontest)
-![docs.rs](https://img.shields.io/docsrs/frontest/latest)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/Zwo1in/frontest-rs/tests)
-![Crates.io](https://img.shields.io/crates/d/frontest)
-![Crates.io](https://img.shields.io/crates/l/frontest)
+<p>
+  <img
+    href="https://crates.io/crates/frontest"
+    alt="Crates.io"
+    src="https://img.shields.io/crates/v/frontest" />
+  <img
+    href="https://docs.rs/frontest/latest/frontest/"
+    alt="docs.rs"
+    src="https://img.shields.io/docsrs/frontest/latest" />
+  <img
+    alt="tests status"
+    src="https://img.shields.io/github/workflow/status/Zwo1in/frontest-rs/tests"
+    href="https://github.com/Zwo1in/frontest-rs" />
+  <img
+    href="https://crates.io/crates/frontest"
+    alt="downloads"
+    src="https://img.shields.io/crates/d/frontest" />
+  <img
+    href="https://crates.io/crates/frontest"
+    alt="licenses"
+    src="https://img.shields.io/crates/l/frontest" />
+</p>
 
 ### A lightweight library to query and assert DOM.
 
