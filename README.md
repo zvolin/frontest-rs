@@ -1,26 +1,11 @@
 # Frontest
 
 <p>
-  <img
-    href="https://crates.io/crates/frontest"
-    alt="Crates.io"
-    src="https://img.shields.io/crates/v/frontest" />
-  <img
-    href="https://docs.rs/frontest/latest/frontest/"
-    alt="docs.rs"
-    src="https://img.shields.io/docsrs/frontest/latest" />
-  <img
-    alt="tests status"
-    src="https://img.shields.io/github/workflow/status/Zwo1in/frontest-rs/tests"
-    href="https://github.com/Zwo1in/frontest-rs" />
-  <img
-    href="https://crates.io/crates/frontest"
-    alt="downloads"
-    src="https://img.shields.io/crates/d/frontest" />
-  <img
-    href="https://crates.io/crates/frontest"
-    alt="licenses"
-    src="https://img.shields.io/crates/l/frontest" />
+  <a href="https://crates.io/crates/frontest"><img alt="Crates.io" src="https://img.shields.io/crates/v/frontest" /></a>
+  <a href="https://docs.rs/frontest/latest/frontest/"><img alt="docs.rs" src="https://img.shields.io/docsrs/frontest/latest" /></a>
+  <a href="https://github.com/Zwo1in/frontest-rs"><img alt="tests status" src="https://img.shields.io/github/workflow/status/Zwo1in/frontest-rs/tests" /></a>
+  <a href="https://crates.io/crates/frontest"><img alt="downloads" src="https://img.shields.io/crates/d/frontest" /></a>
+  <a href="https://crates.io/crates/frontest"><img alt="licenses" src="https://img.shields.io/crates/l/frontest" /><a>
 </p>
 
 ### A lightweight library to query and assert DOM.
