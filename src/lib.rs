@@ -269,7 +269,8 @@ pub mod yew {
         let div = gloo::utils::document().create_element("div").unwrap();
         gloo::utils::body().append_child(&div).unwrap();
         let res = div.clone();
-        ::yew::start_app_with_props_in_element::<Wrapper>(div, WrapperProps { content });
+        ::yew::Renderer::<Wrapper>::with_root_and_props(div, WrapperProps { content }).render();
+        ::yew::platform::time::sleep(std::time::Duration::ZERO).await;
 
         res
     }
@@ -307,6 +308,8 @@ pub mod yew {
 
         assert_eq!("Value: 0", value.inner_text());
         button.click();
+        // Events are handled when the scheduler is yielded. So we need to add this after any interaction with the DOM.
+        ::yew::platform::time::sleep(std::time::Duration::ZERO).await;
         assert_eq!("Value: 1", value.inner_text());
 
         body().remove_child(&mount).unwrap();
